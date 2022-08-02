@@ -1,4 +1,3 @@
-
 import csv
 import os
 import pandas as pd
@@ -40,22 +39,28 @@ SRC_PORT = 2
 IN_PACKET = 1
 OUT_PACKET = 0
 
-def data_preprocessing():
 
-    dirs = ['.\\place1\\England']  # , '.\\place2\\Japan']
+def data_preprocessing():
+    dirs = ['.\\place1\\England', '.\\place2\\Japan']
     for directory in dirs:
 
-        # write all data into output labeled file
-        with open(f'.\\labeled_{directory[9:]}.tsv', 'wt', newline='') as out_file:
-            time = 0.0
-            prev_time = 0.0
-            tsv_writer = csv.writer(out_file, delimiter='\t')
+        for filename in os.listdir(directory):
 
-            tsv_writer.writerow(['frame.time_epoch', 'frame.len', 'tcp.srcport',
-                                 'Random website', 'Browsing', 'Country', 'in/out', 'time_delta'])
+            port_dt_dict_jap = {}
+            port_dt_dict_eng = {}
 
-            for filename in os.listdir(directory):
-                with open(directory + '\\' + filename) as file:
+            with open(directory + '\\' + filename) as file:
+                # write all data into output labeled file
+                if directory == dirs[0]:
+                    out_filename = f'.\\place1_labeled\\labeled_{filename}'
+                else:
+                    out_filename = f'.\\place2_labeled\\labeled_{filename}'
+                with open(out_filename, 'wt', newline='') as out_file:
+                    time = 0.0
+                    tsv_writer = csv.writer(out_file, delimiter='\t')
+
+                    tsv_writer.writerow(['frame.time_epoch', 'frame.len', 'tcp.srcport',
+                                         'Random website', 'Browsing', 'Country', 'in/out', 'time_delta'])
                     tsv_file = csv.reader(file, delimiter="\t")
                     app_name = filename.split('_')
                     # extract label from filename
@@ -68,51 +73,53 @@ def data_preprocessing():
                     for i, line in enumerate(tsv_file):
                         if i == 0:  # skip heading
                             continue
+
                         prev_time = time
                         time = float(line[0])
                         in_out = OUT_PACKET if int(line[SRC_PORT]) >= 49151 else IN_PACKET
                         # count delta frame.time between consecutive packets
-                        if i == 1:
+                        if directory == dirs[0] and line[SRC_PORT] not in port_dt_dict_eng.keys() \
+                                or directory == dirs[1] and line[SRC_PORT] not in port_dt_dict_jap.keys():
                             tsv_writer.writerow([line[TIME_EPOCH], line[FRAME_LEN], line[SRC_PORT], label,
                                                  browsing_type[label], directory[9:], in_out, 0])
                         else:
-                            tsv_writer.writerow([line[TIME_EPOCH], line[FRAME_LEN], line[SRC_PORT], label,
-                                                 browsing_type[label], directory[9:], in_out, time-prev_time])
+                            if directory == dirs[0]:
+                                tsv_writer.writerow([line[TIME_EPOCH], line[FRAME_LEN], line[SRC_PORT], label,
+                                                     browsing_type[label], directory[9:], in_out,
+                                                     float(line[0]) - port_dt_dict_eng[line[SRC_PORT]]])
+                            else:
+                                tsv_writer.writerow([line[TIME_EPOCH], line[FRAME_LEN], line[SRC_PORT], label,
+                                                     browsing_type[label], directory[9:], in_out,
+                                                     float(line[0]) - port_dt_dict_jap[line[SRC_PORT]]])
+                        if directory == dirs[0]:
+                            port_dt_dict_eng[line[SRC_PORT]] = float(line[0])
+                        else:
+                            port_dt_dict_jap[line[SRC_PORT]] = float(line[0])
 
 
 def feature_aggregation(init_df):
+    stream_keys_dict = {}  # {key-port:value-stream_key}
+    stream_key = []
+    for index, row in init_df.iterrows():
+        if row['tcp.srcport'] in stream_keys_dict.keys():
+            stream_keys_dict[row['tcp.srcport']] += 1
+        else:
+            stream_keys_dict[row['tcp.srcport']] = 1
+        stream_key.append(str(row['tcp.srcport']) + '-' +
+                          str(int(stream_keys_dict[row['tcp.srcport']] / 10)))
 
-    last_row = int(init_df.shape[0]) + 1 if int(init_df.shape[0])//10 >0 else 0
-    stream_key = [int(i/10) for i in range(init_df.shape[0])]
     init_df = init_df.assign(stream_key=stream_key)
-
-    init_df = count_delta_time_average_and_std_per_10_packets(init_df, last_row)
-    # init_df = average_and_std_packet_len_per_10_packets(init_df)
-    # init_df.dropna(inplace=True)
+    init_df = count_delta_time_average_and_std_per_10_packets(init_df)
+    init_df = average_and_std_packet_len_per_10_packets(init_df)
 
     return init_df
 
 
-def count_delta_time_average_and_std_per_10_packets(init_df, last_row):
-
-    """counter = 1
-    dt_vals = []
-
-    for row in range(init_df.shape[0]):
-
-        if counter > 10:
-            for i in range(10):
-                init_df.loc[init_df.index[row-i], 'delta_time_average'] = np.average(dt_vals)
-                init_df.loc[init_df.index[row-i], 'delta_time_std'] = np.std(dt_vals)
-            counter = 1
-            dt_vals = []
-        counter += 1
-        dt_vals.append(float(init_df.loc[init_df.index[row], 'time_delta']))"""
-
+def count_delta_time_average_and_std_per_10_packets(init_df):
     average_values_dict = {}
     std_values_dict = {}
 
-    for i_stream in range(last_row):
+    for i_stream in sorted(init_df['stream_key'].unique()):
         mean = init_df.loc[init_df['stream_key'] == i_stream]['time_delta'].mean()
         std = init_df.loc[init_df['stream_key'] == i_stream]['time_delta'].std()
         average_values_dict[i_stream] = mean
@@ -124,13 +131,12 @@ def count_delta_time_average_and_std_per_10_packets(init_df, last_row):
 
 
 def average_and_std_packet_len_per_10_packets(init_df):
-
     average_values_dict = {}
     std_values_dict = {}
 
     for i_stream in sorted(init_df['stream_key'].unique()):
-        mean = init_df.loc[init_df['stream_key'] == i_stream]['tcp.len'].mean()
-        std = init_df.loc[init_df['stream_key'] == i_stream]['tcp.len'].std()
+        mean = init_df.loc[init_df['stream_key'] == i_stream]['frame.len'].mean()
+        std = init_df.loc[init_df['stream_key'] == i_stream]['frame.len'].std()
         average_values_dict[i_stream] = mean
         std_values_dict[i_stream] = std
     init_df['average_len'] = init_df['stream_key'].apply(set_row_feature, args=(average_values_dict,))
@@ -148,8 +154,17 @@ def set_row_feature(row_value, values_dict):
 
 if __name__ == '__main__':
 
-    data_preprocessing()
-    train_df = pd.read_csv('.\\labeled_England.tsv', sep='\t')
-    feature_aggregation(train_df)
-    train_df.to_csv('.\\final_labeled_England.tsv', sep='\t', index=False)
-    print('fin')
+    # data_preprocessing()
+
+    # directory = '.\\place1_labeled'
+    directory = '.\\place2_labeled'
+    files_dfs = []
+    final_labeled_df = pd.DataFrame()
+
+    for filename in os.listdir(directory):
+        single_file_df = pd.read_csv(directory + '\\' + filename, sep='\t')
+        df = feature_aggregation(single_file_df.head(10000))
+        files_dfs.append(df)
+    final_labeled_df = pd.concat(files_dfs)
+    # final_labeled_df.to_csv('.\\FinalLabeled10KEachEngland.tsv', index=False, sep='\t')
+    final_labeled_df.to_csv('.\\FinalLabeled10KEachJapan.tsv', index=False, sep='\t')
