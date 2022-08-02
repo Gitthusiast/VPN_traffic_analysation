@@ -1,7 +1,6 @@
 import csv
 import os
 import pandas as pd
-import numpy as np
 
 browsing_type = {
     'Skype_chat': 'Chat',
@@ -41,6 +40,10 @@ OUT_PACKET = 0
 
 
 def data_preprocessing():
+    """
+    This function creates labeled + time delta field added files for each of the given tsv files
+    The aggregated files are saved into place1_labeled and place2_labeled directories
+    """
     dirs = ['.\\place1\\England', '.\\place2\\Japan']
     for directory in dirs:
 
@@ -98,13 +101,18 @@ def data_preprocessing():
 
 
 def feature_aggregation(init_df):
+    """
+
+    :param init_df:
+    :return:
+    """
     stream_keys_dict = {}  # {key-port:value-stream_key}
     stream_key = []
     for index, row in init_df.iterrows():
         if row['tcp.srcport'] in stream_keys_dict.keys():
             stream_keys_dict[row['tcp.srcport']] += 1
         else:
-            stream_keys_dict[row['tcp.srcport']] = 1
+            stream_keys_dict[row['tcp.srcport']] = 0
         stream_key.append(str(row['tcp.srcport']) + '-' +
                           str(int(stream_keys_dict[row['tcp.srcport']] / 10)))
 
