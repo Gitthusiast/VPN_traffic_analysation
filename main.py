@@ -2,13 +2,13 @@ import dataEngineering as dataE
 from ML_Machine_Learning import ClassifierModel
 import pandas as pd
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # dataE.data_eng()
 
     filename = ".\\FinalLabeled10KEachEngland.tsv"
 
-    names = ['frame.len', 'tcp.srcport', 'io_packet',  'average_delta_time', 'std_delta_time', 'average_len',
+    names = ['frame.time_epoch', 'frame.len', 'tcp.srcport', 'io_packet',  'average_delta_time', 'std_delta_time', 'average_len',
              'std_len', 'categories']
 
     labeled_df = pd.read_csv(filename, usecols=names, sep='\t')

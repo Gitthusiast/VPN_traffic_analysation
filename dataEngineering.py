@@ -162,8 +162,8 @@ def set_row_feature(row_value, values_dict):
 def data_eng():
     # data_preprocessing()
 
-    # directory = '.\\place1_labeled'
-    directory = '.\\place2_labeled'
+    directory = '.\\place1_labeled'
+    # directory = '.\\place2_labeled'
     files_dfs = []
     final_labeled_df = pd.DataFrame()
 
