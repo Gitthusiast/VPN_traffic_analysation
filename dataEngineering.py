@@ -128,7 +128,7 @@ def count_delta_time_average_and_std_per_10_packets(init_df):
 
     for i_stream in sorted(init_df['stream_key'].unique()):
         mean = init_df.loc[init_df['stream_key'] == i_stream]['time_delta'].mean()
-        std = init_df.loc[init_df['stream_key'] == i_stream]['time_delta'].std()
+        std = init_df.loc[init_df['stream_key'] == i_stream]['time_delta'].std(ddof=0)
         average_values_dict[i_stream] = mean
         std_values_dict[i_stream] = std
     init_df['average_delta_time'] = init_df['stream_key'].apply(set_row_feature, args=(average_values_dict,))
@@ -143,7 +143,7 @@ def average_and_std_packet_len_per_10_packets(init_df):
 
     for i_stream in sorted(init_df['stream_key'].unique()):
         mean = init_df.loc[init_df['stream_key'] == i_stream]['frame.len'].mean()
-        std = init_df.loc[init_df['stream_key'] == i_stream]['frame.len'].std()
+        std = init_df.loc[init_df['stream_key'] == i_stream]['frame.len'].std(ddof=0)
         average_values_dict[i_stream] = mean
         std_values_dict[i_stream] = std
     init_df['average_len'] = init_df['stream_key'].apply(set_row_feature, args=(average_values_dict,))
@@ -159,8 +159,14 @@ def set_row_feature(row_value, values_dict):
     return values_dict[row_value]
 
 
+
 def data_eng():
     directory = '.\\place2_labeled'
+
+    # data_preprocessing()
+
+    directory = '.\\place1_labeled'
+    # directory = '.\\place2_labeled'
     files_dfs = []
     final_labeled_df = pd.DataFrame()
 
@@ -171,3 +177,4 @@ def data_eng():
     final_labeled_df = pd.concat(files_dfs)
     # final_labeled_df.to_csv('.\\FinalLabeled10KEachEngland.tsv', index=False, sep='\t')
     final_labeled_df.to_csv('.\\FinalLabeled10KEachJapan.tsv', index=False, sep='\t')
+
