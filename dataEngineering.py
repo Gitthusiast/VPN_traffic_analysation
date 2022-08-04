@@ -3,6 +3,8 @@ import os
 import pandas as pd
 
 browsing_type = {
+    'Random websites': 'Browsing',
+
     'Skype_chat': 'Chat',
     'Facebook': 'Chat',
     'GoogleHangouts': 'Chat',
@@ -13,11 +15,8 @@ browsing_type = {
     'Netflix': 'Streaming',
     'Vimeo': 'Streaming',
 
-    'qBitTorrent': 'qBittorrent',
-    'qBittorrent': 'qBittorrent',
-
-    'Random_Websites': 'Random_Websites',
-
+    'qBitTorrent': 'File Transfer',
+    'qBittorrent': 'File Transfer',
     'Skype_files': 'File Transfer',
     'Dropbox': 'File Transfer',
     'gdrive': 'File Transfer',
@@ -63,7 +62,7 @@ def data_preprocessing():
                     tsv_writer = csv.writer(out_file, delimiter='\t')
 
                     tsv_writer.writerow(['frame.time_epoch', 'frame.len', 'tcp.srcport',
-                                         'Random website', 'Browsing', 'Country', 'in/out', 'time_delta'])
+                                         'applications_and_websites', 'categories', 'Country', 'io_packet', 'time_delta'])
                     tsv_file = csv.reader(file, delimiter="\t")
                     app_name = filename.split('_')
                     # extract label from filename
@@ -160,11 +159,7 @@ def set_row_feature(row_value, values_dict):
     return values_dict[row_value]
 
 
-if __name__ == '__main__':
-
-    # data_preprocessing()
-
-    # directory = '.\\place1_labeled'
+def data_eng():
     directory = '.\\place2_labeled'
     files_dfs = []
     final_labeled_df = pd.DataFrame()
