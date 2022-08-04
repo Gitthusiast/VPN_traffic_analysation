@@ -1,8 +1,10 @@
-
+import dataEngineering as dataE
 from ML_Machine_Learning import ClassifierModel
 import pandas as pd
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+
+    # dataE.data_eng()
 
     filename = ".\\FinalLabeled10KEachEngland.tsv"
 

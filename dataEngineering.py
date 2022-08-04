@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 browsing_type = {
-    'Random_Websites': 'Browsing',
+    'Random websites': 'Browsing',
 
     'Skype_chat': 'Chat',
     'Facebook': 'Chat',
@@ -159,7 +159,9 @@ def set_row_feature(row_value, values_dict):
     return values_dict[row_value]
 
 
-if __name__ == '__main__':
+
+def data_eng():
+    directory = '.\\place2_labeled'
 
     # data_preprocessing()
 
@@ -173,5 +175,6 @@ if __name__ == '__main__':
         df = feature_aggregation(single_file_df.head(10000))
         files_dfs.append(df)
     final_labeled_df = pd.concat(files_dfs)
-    final_labeled_df.to_csv('.\\FinalLabeled10KEachEngland.tsv', index=False, sep='\t')
-    # final_labeled_df.to_csv('.\\FinalLabeled10KEachJapan.tsv', index=False, sep='\t')
+    # final_labeled_df.to_csv('.\\FinalLabeled10KEachEngland.tsv', index=False, sep='\t')
+    final_labeled_df.to_csv('.\\FinalLabeled10KEachJapan.tsv', index=False, sep='\t')
+
