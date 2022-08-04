@@ -6,14 +6,16 @@ if __name__ == "__main__":
 
     filename = ".\\FinalLabeled10KEachEngland.tsv"
 
-    names = ['frame.len', 'tcp.srcport', 'Random website', 'Browsing', 'Country', 'in/out', 'time_delta',
-             'average_delta_time', 'std_delta_time', 'average_len', 'std_len']
+    # names = ['frame.len', 'tcp.srcport', 'Random website', 'Browsing', 'Country', 'io_packet', 'time_delta',
+    #          'average_delta_time', 'std_delta_time', 'average_len', 'std_len']
+    names = ['frame.len', 'tcp.srcport', 'io_packet',  'average_delta_time', 'std_delta_time', 'average_len',
+             'std_len', 'categories']
 
     labeled_df = pd.read_csv(filename, usecols=names, sep='\t')
     print(labeled_df)
 
-    x_iloc_list = [0, 1, 5, 7, 8, 8, 10, 11]  # indexes in the labeled csv
-    y_iloc = 4
+    x_iloc_list = [0, 1, 3, 4, 5, 6, 7]  # indexes in the labeled csv
+    y_iloc = 2
 
     model = ClassifierModel(names, labeled_df, x_iloc_list, y_iloc)
 
@@ -22,8 +24,6 @@ if __name__ == "__main__":
     model.ANN()
     model.RF()
     model.DT()
-    model.SVM('rbf')
-    model.SVM('linear')
-    model.XGBOOST()
+    # model.SVM('linear')
 
     model.run_models()
