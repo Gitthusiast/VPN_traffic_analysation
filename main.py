@@ -24,6 +24,7 @@ if __name__ == '__main__':
     model.ANN()
     model.RF()
     model.DT()
+    model.XGBOOST()
     # model.SVM('linear')
 
     model.run_models()
