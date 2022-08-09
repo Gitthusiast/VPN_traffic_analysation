@@ -5,6 +5,7 @@ import seaborn as sns
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
 from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -30,11 +31,10 @@ class ClassifierModel:
         self.feature_names = feature_names
         self.x_iloc_list = x_iloc_list
         self.y_iloc = y_iloc
-        self.X = X
-        self.Y = y
-        self.x_train = X_train
+        sc = StandardScaler()
+        self.x_train = sc.fit_transform(X_train)
         self.y_train = y_train
-        self.x_test = X_test
+        self.x_test = sc.transform(X_test)
         self.y_test = y_test
         self.models_accuracy = []
 
@@ -133,7 +133,8 @@ class ClassifierModel:
 
     def ANN(self):
 
-        ANN_Classifier = MLPClassifier(solver='lbfgs', alpha=1e-6, hidden_layer_sizes=(7, 5), random_state=1)
+        ANN_Classifier = MLPClassifier(solver='lbfgs', alpha=1e-6, hidden_layer_sizes=(100, 100),
+                                       max_iter=400, tol=1e-6, random_state=1)
         ANN_Classifier.fit(self.x_train, self.y_train)
         joblib.dump(ANN_Classifier, "model/ann.sav")
         y_pred = ANN_Classifier.predict(self.x_test)
@@ -256,7 +257,9 @@ class ClassifierModel:
         :return:
         """
 
+        sc = StandardScaler()
         X = self.test_set.iloc[:, self.x_iloc_list].values
+        X = sc.fit_transform(X)
         Y = self.test_set.iloc[:, self.y_iloc].values
         models = ["model/" + f for f in listdir("model") if isfile("model/" + f)]
         for filename in models:
