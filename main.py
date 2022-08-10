@@ -2,7 +2,7 @@ import dataEngineering as dataE
 from ML_Machine_Learning import ClassifierModel
 import pandas as pd
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
     # dataE.data_eng()
 
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     labeled_df = pd.read_csv(filename, usecols=names, sep='\t')
     print(labeled_df)
 
-    x_iloc_list = [0, 1, 3, 4, 5, 6, 7]  # indexes in the labeled csv
+    x_iloc_list = [0, 1, 3, 4, 5, 6, 7, 8]  # indexes in the labeled csv
     y_iloc = 2
 
     model = ClassifierModel(names, labeled_df, x_iloc_list, y_iloc)

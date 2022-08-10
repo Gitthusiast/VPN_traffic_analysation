@@ -2,12 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib import pyplot
-from sklearn.inspection import permutation_importance
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
 from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -22,17 +20,22 @@ import xgboost as xgb
 
 class ClassifierModel:
 
-    def __init__(self, feature_names, dataset, x_iloc_list, y_iloc):
+    def __init__(self, feature_names, dataset, x_iloc_list, y_iloc, testSize=0.2):
 
         # From dataset:
         X = dataset.iloc[:, x_iloc_list].values
         y = dataset.iloc[:, y_iloc].values
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize, random_state=0)
+
         self.test_set = pd.read_csv("FinalLabeled10KEachJapan.tsv", usecols=feature_names, sep='\t')
         self.feature_names = feature_names
         self.x_iloc_list = x_iloc_list
         self.y_iloc = y_iloc
-        self.X = X
-        self.Y = y
+        sc = StandardScaler()
+        self.x_train = sc.fit_transform(X_train)
+        self.y_train = y_train
+        self.x_test = sc.transform(X_test)
+        self.y_test = y_test
         self.models_accuracy = []
 
     # ****************** Scores: ************************************
@@ -47,9 +50,8 @@ class ClassifierModel:
                 total += confusion_matrix[i, j]
         return sum/total
 
-    def classification_report_plot(self, clf_report, filename):
+    def classification_report_plot(self, clf_report, filename, folder="england_cm_plots"):
 
-        folder = "real_data_cm_plots"
         if not os.path.isdir(folder):
             os.mkdir(folder)
 
@@ -72,8 +74,9 @@ class ClassifierModel:
                 os.mkdir(folder)
 
         out_file_name = folder + "/" + filename + ".png"
-        matrix = plot_confusion_matrix(loaded_model, X, Y, labels=['Chat', 'Streaming', 'Random_Websites',
-                                                                   'File Transfer', 'Video Conferencing'],
+        matrix = plot_confusion_matrix(loaded_model, self.x_test, self.y_test,
+                                       labels=['Chat', 'Streaming', 'Random_Websites',
+                                               'File Transfer', 'Video Conferencing'],
                                        values_format='.2%', normalize='true',  cmap=plt.cm.Blues)
         title = 'Confusion Matrix ' + filename.upper() + '\n' + experiment_alias
         matrix.ax_.set_title(title, color='Black')
@@ -130,12 +133,13 @@ class ClassifierModel:
 
     def ANN(self):
 
-        ANN_Classifier = MLPClassifier(solver='lbfgs', alpha=1e-6, hidden_layer_sizes=(7, 5), random_state=1)
-        ANN_Classifier.fit(self.X, self.Y)
+        ANN_Classifier = MLPClassifier(solver='lbfgs', alpha=1e-6, hidden_layer_sizes=(100, 100),
+                                       max_iter=400, tol=1e-6, random_state=1)
+        ANN_Classifier.fit(self.x_train, self.y_train)
         joblib.dump(ANN_Classifier, "model/ann.sav")
-        y_pred = ANN_Classifier.predict(self.test_set.iloc[:, self.x_iloc_list])
+        y_pred = ANN_Classifier.predict(self.x_test)
 
-        self.classification_report_plot(classification_report(self.test_set.iloc[:, self.y_iloc], y_pred,
+        self.classification_report_plot(classification_report(self.y_test, y_pred,
                                                               output_dict=True), "ANN")
 
         print("\n")
@@ -143,36 +147,37 @@ class ClassifierModel:
 
     def SVM(self, kernel_type="linear"):
         SVM_Classifier = SVC()
-        SVM_Classifier.fit(self.X, self.Y)
+        SVM_Classifier.fit(self.x_train, self.y_train)
         joblib.dump(SVM_Classifier, "model/svm" + kernel_type + '.sav')
-        y_pred = SVM_Classifier.predict(self.test_set.iloc[:, self.x_iloc_list])
+        y_pred = SVM_Classifier.predict(self.x_test)
 
-        self.classification_report_plot(classification_report(self.test_set.iloc[:, self.y_iloc], y_pred,
+        self.classification_report_plot(classification_report(self.y_test, y_pred,
                                                               output_dict=True), f"SVM-{kernel_type}")
 
         print("\n")
         print("*************************Support Vector Classifier************************* \n")
 
     def RF(self):
-        RF_Classifier = RandomForestClassifier(n_estimators=10, criterion='entropy', random_state=42, max_depth=3,
-                                               min_samples_leaf=5)
-        RF_Classifier.fit(self.X, self.Y)
+        RF_Classifier = RandomForestClassifier(n_estimators=100, criterion='entropy', random_state=42, max_depth=5,
+                                               min_samples_leaf=100)
+        RF_Classifier.fit(self.x_train, self.y_train)
         joblib.dump(RF_Classifier, "model/rf.sav")
-        y_pred = RF_Classifier.predict(self.test_set.iloc[:, self.x_iloc_list])
+        y_pred = RF_Classifier.predict(self.x_test)
 
-        self.classification_report_plot(classification_report(self.test_set.iloc[:, self.y_iloc], y_pred,
+        self.classification_report_plot(classification_report(self.y_test, y_pred,
                                                               output_dict=True), "RF")
 
         print("\n")
         print("************************* Random Forest Classifier ************************* \n")
 
     def NB(self):
-        NB_Classifier = GaussianNB()
-        NB_Classifier.fit(self.X, self.Y)
-        joblib.dump(NB_Classifier, "model/nb.sav")
-        y_pred = NB_Classifier.predict(self.test_set.iloc[:, self.x_iloc_list])
+        NB_Classifier = GaussianNB(var_smoothing=1e-3)
 
-        self.classification_report_plot(classification_report(self.test_set.iloc[:, self.y_iloc], y_pred,
+        NB_Classifier.fit(self.x_train, self.y_train)
+        joblib.dump(NB_Classifier, "model/nb.sav")
+        y_pred = NB_Classifier.predict(self.x_test)
+
+        self.classification_report_plot(classification_report(self.y_test, y_pred,
                                                               output_dict=True), "NB")
 
         print("\n")
@@ -180,11 +185,11 @@ class ClassifierModel:
 
     def KNN(self):
         KNN_Classifier = KNeighborsClassifier()
-        KNN_Classifier.fit(self.X, self.Y)
+        KNN_Classifier.fit(self.x_train, self.y_train)
         joblib.dump(KNN_Classifier, "model/knn.sav")
-        y_pred = KNN_Classifier.predict(self.test_set.iloc[:, self.x_iloc_list])
+        y_pred = KNN_Classifier.predict(self.x_test)
 
-        self.classification_report_plot(classification_report(self.test_set.iloc[:, self.y_iloc], y_pred,
+        self.classification_report_plot(classification_report(self.y_test, y_pred,
                                                               output_dict=True), "KNN")
 
         print("\n")
@@ -195,17 +200,22 @@ class ClassifierModel:
         xgb_model = xgb.XGBClassifier()
         print("\n")
         print("************************* XGBoost Classifier *************************\n")
-        target = self.own_label_encoder(self.Y)
-        xgb_model.fit(self.X, target)
+        target = self.own_label_encoder(self.y_train)
+        xgb_model.fit(self.x_train, target)
         joblib.dump(xgb_model, "model/xgb.sav")
+        y_pred = xgb_model.predict(self.x_test)
+        y_pred = self.own_inverse_label_encoder(y_pred)
+
+        self.classification_report_plot(classification_report(self.y_test, y_pred,
+                                                              output_dict=True), "XGBOOST")
 
     def DT(self):
-        DT_Classifier = DecisionTreeClassifier(criterion="gini", random_state=42, max_depth=3, min_samples_leaf=5)
-        DT_Classifier.fit(self.X, self.Y)
+        DT_Classifier = DecisionTreeClassifier(criterion="gini", random_state=42, max_depth=5, min_samples_leaf=10)
+        DT_Classifier.fit(self.x_train, self.y_train)
         joblib.dump(DT_Classifier, "model/dt.sav")
-        y_pred = DT_Classifier.predict(self.test_set.iloc[:, self.x_iloc_list])
+        y_pred = DT_Classifier.predict(self.x_test)
 
-        self.classification_report_plot(classification_report(self.test_set.iloc[:, self.y_iloc], y_pred,
+        self.classification_report_plot(classification_report(self.y_test, y_pred,
                                                               output_dict=True), "DT")
 
         print("\n")
@@ -219,14 +229,15 @@ class ClassifierModel:
         accuracies = pd.DataFrame(
             self.models_accuracy, columns=['Accuracy', 'Std'],
             # index=['KNN', 'linearSVM', 'rbfSVM', 'NB', 'RF', 'ANN', 'DT'])
-            index=['KNN', 'NB', 'RF', 'ANN', 'DT'])
+            index=['KNN', 'NB', 'RF', 'ANN', 'DT', 'XGBOOST'])
         fig = plt.figure(figsize=(16, 10))
         sns.set(font_scale=4)
         sns.heatmap(accuracies, annot=True, cmap="BuPu")
         fig.savefig(out_file_name, bbox_inches="tight")
 
     def own_inverse_label_encoder(self, to_transform):
-        dict_transform_lables = {0: 'Windows', 1: 'Linux', 2: 'Mac'}
+        dict_transform_lables = {0: 'Browsing', 1: 'Chat', 2: 'Streaming', 3: 'File Transfer',
+                                 4: 'Video Conferencing'}
         target = to_transform
         results = []
         for label in target:
@@ -234,16 +245,22 @@ class ClassifierModel:
         return results
 
     def own_label_encoder(self, to_transform):
-        dict_transform_lables = {'Windows': 0, 'Linux': 1, 'Mac': 2}
+        dict_transform_lables = {'Browsing': 0, 'Chat': 1, 'Streaming': 2, 'File Transfer': 3,
+                                 'Video Conferencing': 4}
         target = []
         for label in to_transform:
             target.append(dict_transform_lables[label])
         return target
 
     def run_models(self):
-        # dataset = dataset.drop(columns=['ip.flags.df'])
+        """
+        This funciton returns the final classification results on Japan
+        :return:
+        """
 
+        sc = StandardScaler()
         X = self.test_set.iloc[:, self.x_iloc_list].values
+        X = sc.fit_transform(X)
         Y = self.test_set.iloc[:, self.y_iloc].values
         models = ["model/" + f for f in listdir("model") if isfile("model/" + f)]
         for filename in models:
@@ -252,15 +269,19 @@ class ClassifierModel:
 
             filename = filename.split('/')[1].split('.')[0]
             results = loaded_model.predict(X)
-            # if filename == 'xgb':
-            #     results = self.own_inverse_label_encoder(results)
 
-            self.visualize_feature_importance(loaded_model, self.feature_names[:-1], filename)
+            if filename == 'xgb':
+                results = self.own_inverse_label_encoder(results)
+
+            self.classification_report_plot(classification_report(Y, results, output_dict=True),
+                                            filename, "japan_cm_plots")
+
+            # self.visualize_feature_importance(loaded_model, self.feature_names[:-1], filename)
 
             cm = confusion_matrix(Y, results)*100
             print('Precision: ', self.accuracy(cm), '%')
             print("******************\n")
-            self.confusion_matrix_report_plot(loaded_model, filename, X, Y, "browsing_classification")
+            # self.confusion_matrix_report_plot(loaded_model, filename, X, Y, "browsing_classification")
 
             result = loaded_model.score(X, Y)
             print(result)
