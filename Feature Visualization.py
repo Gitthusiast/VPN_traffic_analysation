@@ -36,12 +36,13 @@ def sns_plots(df, x, y):
 
 if __name__ == "__main__":
 
-    directory = '.\\FinalLabeled10KEachJapan.tsv'
+    # directory = '.\\FinalLabeled10KEachJapan.tsv'
+    directory = '.\\FinalLabeled10KEachEngland.tsv'
     df = pd.read_csv(directory, sep='\t')
 
     # filtering out one distant outlier
 
-    feature_list = ['frame.time_epoch', 'frame.len', 'tcp.srcport', 'io_packet', 'time_delta',
+    feature_list = ['frame.len', 'tcp.srcport', 'io_packet', 'time_delta',
                      'average_delta_time', 'std_delta_time', 'average_len', 'std_len']
     for feature in feature_list:
-        sns_plots(df, "Browsing", feature)
+        sns_plots(df, "categories", feature)

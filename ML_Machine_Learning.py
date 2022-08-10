@@ -27,7 +27,7 @@ class ClassifierModel:
         # From dataset:
         X = dataset.iloc[:, x_iloc_list].values
         y = dataset.iloc[:, y_iloc].values
-        self.test_set = pd.read_csv("FinalLabeled10KEachJapan.tsv", usecols=feature_names, sep='\t')
+        self.test_set = pd.read_csv("clf_model\\test.csv", usecols=feature_names)
         self.feature_names = feature_names
         self.x_iloc_list = x_iloc_list
         self.y_iloc = y_iloc
@@ -72,8 +72,7 @@ class ClassifierModel:
                 os.mkdir(folder)
 
         out_file_name = folder + "/" + filename + ".png"
-        matrix = plot_confusion_matrix(loaded_model, X, Y, labels=['Chat', 'Streaming', 'Random_Websites',
-                                                                   'File Transfer', 'Video Conferencing'],
+        matrix = plot_confusion_matrix(loaded_model, X, Y, labels=['Windows', 'Linux', 'Mac'],
                                        values_format='.2%', normalize='true',  cmap=plt.cm.Blues)
         title = 'Confusion Matrix ' + filename.upper() + '\n' + experiment_alias
         matrix.ax_.set_title(title, color='Black')
@@ -218,8 +217,7 @@ class ClassifierModel:
         out_file_name = folder + "/summary.png"
         accuracies = pd.DataFrame(
             self.models_accuracy, columns=['Accuracy', 'Std'],
-            # index=['KNN', 'linearSVM', 'rbfSVM', 'NB', 'RF', 'ANN', 'DT'])
-            index=['KNN', 'NB', 'RF', 'ANN', 'DT'])
+            index=['KNN', 'linearSVM', 'rbfSVM', 'NB', 'RF', 'ANN', 'DT'])
         fig = plt.figure(figsize=(16, 10))
         sns.set(font_scale=4)
         sns.heatmap(accuracies, annot=True, cmap="BuPu")
@@ -260,7 +258,7 @@ class ClassifierModel:
             cm = confusion_matrix(Y, results)*100
             print('Precision: ', self.accuracy(cm), '%')
             print("******************\n")
-            self.confusion_matrix_report_plot(loaded_model, filename, X, Y, "browsing_classification")
+            self.confusion_matrix_report_plot(loaded_model, filename, X, Y, "experiment_1_all_os_types")
 
             result = loaded_model.score(X, Y)
             print(result)
