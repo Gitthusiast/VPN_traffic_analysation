@@ -14,8 +14,12 @@ import os
 import joblib
 from os import listdir
 from os.path import isfile
-from sklearn.model_selection import KFold, cross_val_score, train_test_split
+from sklearn.model_selection import KFold, cross_val_score, train_test_split, GridSearchCV
 import xgboost as xgb
+
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.preprocessing import PowerTransformer
+
 
 
 class ClassifierModel:
@@ -158,8 +162,8 @@ class ClassifierModel:
         print("*************************Support Vector Classifier************************* \n")
 
     def RF(self):
-        RF_Classifier = RandomForestClassifier(n_estimators=10, criterion='entropy', random_state=42, max_depth=3,
-                                               min_samples_leaf=5)
+        RF_Classifier = RandomForestClassifier(n_estimators=100, criterion='entropy', random_state=42, max_depth=5,
+                                               min_samples_leaf=100)
         RF_Classifier.fit(self.x_train, self.y_train)
         joblib.dump(RF_Classifier, "model/rf.sav")
         y_pred = RF_Classifier.predict(self.x_test)
@@ -171,7 +175,8 @@ class ClassifierModel:
         print("************************* Random Forest Classifier ************************* \n")
 
     def NB(self):
-        NB_Classifier = GaussianNB()
+        NB_Classifier = GaussianNB(var_smoothing=1e-3)
+
         NB_Classifier.fit(self.x_train, self.y_train)
         joblib.dump(NB_Classifier, "model/nb.sav")
         y_pred = NB_Classifier.predict(self.x_test)

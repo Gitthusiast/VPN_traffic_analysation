@@ -168,13 +168,22 @@ def data_eng():
     directory = '.\\place1_labeled'
     # directory = '.\\place2_labeled'
     files_dfs = []
-    final_labeled_df = pd.DataFrame()
-
+    df = None
     for filename in os.listdir(directory):
         single_file_df = pd.read_csv(directory + '\\' + filename, sep='\t')
-        df = feature_aggregation(single_file_df.head(10000))
+        if single_file_df['categories'][0] == 'Browsing':
+            df = feature_aggregation(single_file_df.head(60000))
+        elif single_file_df['categories'][0] == 'Chat':
+            df = feature_aggregation(single_file_df.head(12000))
+        elif single_file_df['categories'][0] == 'Streaming':
+            df = feature_aggregation(single_file_df.head(20000))
+        elif single_file_df['categories'][0] == 'File Transfer':
+            df = feature_aggregation(single_file_df.head(10000))
+        elif single_file_df['categories'][0] == 'Video Conferencing':
+            df = feature_aggregation(single_file_df.head(15000))
+
         files_dfs.append(df)
     final_labeled_df = pd.concat(files_dfs)
-    # final_labeled_df.to_csv('.\\FinalLabeled10KEachEngland.tsv', index=False, sep='\t')
-    final_labeled_df.to_csv('.\\FinalLabeled10KEachJapan.tsv', index=False, sep='\t')
+    final_labeled_df.to_csv('.\\FinalLabeled10KEachEngland.tsv', index=False, sep='\t')
+    # final_labeled_df.to_csv('.\\FinalLabeled10KEachJapan.tsv', index=False, sep='\t')
 
