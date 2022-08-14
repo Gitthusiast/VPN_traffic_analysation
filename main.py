@@ -6,10 +6,10 @@ if __name__ == '__main__':
 
     # dataE.data_eng()
 
-    filename = ".\\FinalLabeled10KEachEngland.tsv"
+    filename = ".\\FinalLabeledFileTransferEngland.tsv"
 
-    names = ['frame.time_epoch', 'frame.len', 'tcp.srcport', 'io_packet',  'average_delta_time', 'std_delta_time', 'average_len',
-             'std_len', 'categories']
+    names = ['frame.len', 'tcp.srcport', 'io_packet',  'average_delta_time', 'std_delta_time', 'average_len',
+             'std_len', 'time_delta', 'applications_and_websites']
 
     labeled_df = pd.read_csv(filename, usecols=names, sep='\t')
     print(labeled_df)
