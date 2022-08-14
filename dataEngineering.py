@@ -67,7 +67,8 @@ def data_preprocessing():
                     tsv_writer = csv.writer(out_file, delimiter='\t')
 
                     tsv_writer.writerow(['frame.time_epoch', 'frame.len', 'tcp.srcport',
-                                         'applications_and_websites', 'categories', 'Country', 'io_packet', 'time_delta'])
+                                         'applications_and_websites', 'categories', 'Country', 'io_packet',
+                                         'time_delta'])
                     tsv_file = csv.reader(file, delimiter="\t")
                     app_name = filename.split('_')
                     # extract label from filename
@@ -108,7 +109,7 @@ def data_preprocessing():
 
 def feature_aggregation(init_df):
     """
-
+    This function recieves the original data from and adds to it the
     :param init_df:
     :return:
     """
@@ -130,6 +131,9 @@ def feature_aggregation(init_df):
 
 
 def count_delta_time_average_and_std_per_10_packets(init_df):
+    """
+    Data aggregation helper function
+    """
     average_values_dict = {}
     std_values_dict = {}
 
@@ -145,6 +149,9 @@ def count_delta_time_average_and_std_per_10_packets(init_df):
 
 
 def average_and_std_packet_len_per_10_packets(init_df):
+    """
+    Data aggregation helper function
+    """
     average_values_dict = {}
     std_values_dict = {}
 
@@ -161,34 +168,38 @@ def average_and_std_packet_len_per_10_packets(init_df):
 
 def set_row_feature(row_value, values_dict):
     """
-        This is a helper function for the dataframe's apply method
+    This is a helper function for the dataframe's apply method
     """
     return values_dict[row_value]
 
 
-
 def data_eng():
+    """
+    This is the main function of the data engineering script.
+    It conducts the data labeling and fields engineering.
+    Then takes the appropriate number of records from each file to ensure that the
+    resulted dataset will contain a proportional number of records from each category.
+    """
     # data_preprocessing()
 
-    directory = '.\\place1_labeled'
-    # directory = '.\\place2_labeled'
+    # directory = '.\\place1_labeled'
+    directory = '.\\place2_labeled'
     files_dfs = []
     df = None
     for filename in os.listdir(directory):
         single_file_df = pd.read_csv(directory + '\\' + filename, sep='\t')
-        # if single_file_df['categories'][0] == 'Browsing':
-        #     df = feature_aggregation(single_file_df.head(60000))
-        # elif single_file_df['categories'][0] == 'Chat':
-        #     df = feature_aggregation(single_file_df.head(12000))
-        # if single_file_df['categories'][0] == 'Streaming':
-        #     df = feature_aggregation(single_file_df.head(20000))
-        if single_file_df['categories'][0] == 'File Transfer':
-            df = feature_aggregation(single_file_df.head(50000))
-        # if single_file_df['categories'][0] == 'Video Conferencing':
-        #     df = feature_aggregation(single_file_df.head(15000))
+        if single_file_df['categories'][0] == 'Browsing':
+            df = feature_aggregation(single_file_df.head(60000))
+        elif single_file_df['categories'][0] == 'Chat':
+            df = feature_aggregation(single_file_df.head(12000))
+        elif single_file_df['categories'][0] == 'Streaming':
+            df = feature_aggregation(single_file_df.head(20000))
+        elif single_file_df['categories'][0] == 'File Transfer':
+            df = feature_aggregation(single_file_df.head(10000))
+        elif single_file_df['categories'][0] == 'Video Conferencing':
+            df = feature_aggregation(single_file_df.head(15000))
 
         files_dfs.append(df)
     final_labeled_df = pd.concat(files_dfs)
-    final_labeled_df.to_csv('.\\FinalLabeledFileTransferEngland.tsv', index=False, sep='\t')
-    # final_labeled_df.to_csv('.\\FinalLabeledFileTransferJapan.tsv', index=False, sep='\t')
-
+    # final_labeled_df.to_csv('.\\FinalLabeledFileTransferEngland.tsv', index=False, sep='\t')
+    final_labeled_df.to_csv('.\\FinalLabeledFileTransferJapan.tsv', index=False, sep='\t')

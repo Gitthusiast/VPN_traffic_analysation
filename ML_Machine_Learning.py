@@ -1,9 +1,8 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -14,12 +13,11 @@ import os
 import joblib
 from os import listdir
 from os.path import isfile
-from sklearn.model_selection import KFold, cross_val_score, train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 import xgboost as xgb
 
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.preprocessing import PowerTransformer
-
 
 
 class ClassifierModel:
@@ -67,79 +65,12 @@ class ClassifierModel:
         sns.heatmap(pd.DataFrame(clf_report).iloc[:-1, :].T, annot=True, cmap="Blues")
         fig.savefig(out_file_name, bbox_inches="tight")
 
-    def confusion_matrix_report_plot(self, loaded_model, filename, X, Y, experiment_alias=''):
-
-        folder = "confusion_matrix"
-        if not os.path.isdir(folder):
-            os.mkdir(folder)
-
-        if experiment_alias != '':
-            folder = folder + '/' + experiment_alias
-            if not os.path.isdir(folder):
-                os.mkdir(folder)
-
-        out_file_name = folder + "/" + filename + ".png"
-        matrix = plot_confusion_matrix(loaded_model, self.x_test, self.y_test,
-                                       labels=['Chat', 'Streaming', 'Random_Websites',
-                                               'File Transfer', 'Video Conferencing'],
-                                       values_format='.2%', normalize='true',  cmap=plt.cm.Blues)
-        title = 'Confusion Matrix ' + filename.upper() + '\n' + experiment_alias
-        matrix.ax_.set_title(title, color='Black')
-        plt.xlabel('Predicted Label', color='Black')
-        plt.ylabel('True Label', color='Black')
-        matrix.figure_.savefig(out_file_name, bbox_inches="tight")
-
-    def visualize_feature_importance(self, loaded_model, feature_names, filename):
-
-        importance = []
-
-        if type(loaded_model) == DecisionTreeClassifier:
-            importance = loaded_model.feature_importances_
-            # summarize feature importance
-            for i, v in enumerate(importance):
-                print('Feature: %s, Score: %.5f' % (feature_names[i], v))
-            # plot feature importance
-
-        elif type(loaded_model) == MLPClassifier:
-            importance = loaded_model.coefs_[0][0]
-            # summarize feature importance
-            for i, v in enumerate(importance):
-                print('Feature: %s, Score: %.5f' % (feature_names[i], v))
-
-        elif type(loaded_model) == RandomForestClassifier:
-            importance = loaded_model.feature_importances_
-            # summarize feature importance
-            for i, v in enumerate(importance):
-                print('Feature: %s, Score: %.5f' % (feature_names[i], v))
-            fig = plt.figure(figsize=(10, 5))
-            plt.barh(feature_names, importance, color='#199CEC')
-            plt.xlabel("Feature importance")
-            plt.ylabel("Feature name")
-            plt.title(f"Feature importance")  #RF
-            plt.show()
-
-        # elif type(loaded_model) == KNeighborsClassifier:
-        #     le_res = self.own_label_encoder(self.Y)
-        #     results = permutation_importance(loaded_model, self.X, le_res,
-        #                                      scoring='neg_mean_squared_error')
-        #     # get importance
-        #     importance = results.importances_mean
-        #     # summarize feature importance
-
-    def k_fold(self, estimator, k, estimator_name):
-
-        kfold = KFold(n_splits=k, shuffle=True, random_state=np.random.seed(7))
-        results = cross_val_score(estimator, self.X, self.Y, cv=kfold)
-        print(f"****{estimator_name}:****")
-        self.models_accuracy.append((results.mean(), results.std()))
-        print("Baseline accuracy: (%.2f%%) with std: (%.2f%%)" % (results.mean()*100, results.std()*100))
-
     # ****************** MODELS: ************************************
 
     def ANN(self):
 
-        ANN_Classifier = MLPClassifier(solver='lbfgs', alpha=1e-6, hidden_layer_sizes=(100, 100),
-                                       max_iter=400, tol=1e-6, random_state=1)
+        ANN_Classifier = MLPClassifier(solver='lbfgs', alpha=1e-4, hidden_layer_sizes=(20, 20),
+                                       max_iter=200, tol=1e-4, random_state=1)
         ANN_Classifier.fit(self.x_train, self.y_train)
         joblib.dump(ANN_Classifier, "model/ann.sav")
         y_pred = ANN_Classifier.predict(self.x_test)
@@ -241,8 +172,11 @@ class ClassifierModel:
         fig.savefig(out_file_name, bbox_inches="tight")
 
     def own_inverse_label_encoder(self, to_transform):
-        """dict_transform_lables = {0: 'Browsing', 1: 'Chat', 2: 'Streaming', 3: 'File Transfer',
-                                 4: 'Video Conferencing'}"""
+        """
+        Helper function for XGBOOST
+        """
+        # dict_transform_lables = {0: 'Browsing', 1: 'Chat', 2: 'Streaming', 3: 'File Transfer',
+        #                          4: 'Video Conferencing'}
         # dict_transform_lables = {0: 'Youtube', 1: 'Netflix', 2: 'Vimeo'}
         # dict_transform_lables = {0: 'Skype_chat', 1: 'Facebook', 2: 'GoogleHangouts',
         #                          3: 'Whatsapp_chat', 4: 'Telegram_chat'}
@@ -259,8 +193,11 @@ class ClassifierModel:
         return results
 
     def own_label_encoder(self, to_transform):
-        """dict_transform_lables = {'Browsing': 0, 'Chat': 1, 'Streaming': 2, 'File Transfer': 3,
-                                 'Video Conferencing': 4}"""
+        """
+        Helper function for XGBOOST
+        """
+        # dict_transform_lables = {'Browsing': 0, 'Chat': 1, 'Streaming': 2, 'File Transfer': 3,
+        #                          'Video Conferencing': 4}
         # dict_transform_lables = {'Youtube': 0, 'Netflix': 1, 'Vimeo': 2}
         # dict_transform_lables = {'Skype_chat': 0, 'Facebook': 1, 'GoogleHangouts': 2,
         #                          'Whatsapp_chat': 3, 'Telegram_chat': 4}
