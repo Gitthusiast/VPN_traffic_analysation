@@ -31,11 +31,12 @@ class ClassifierModel:
         y = dataset.iloc[:, y_iloc].values
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize, random_state=0)
 
-        self.test_set = pd.read_csv("FinalLabeled10KEachJapan.tsv", usecols=feature_names, sep='\t')
+        self.test_set = pd.read_csv("FinalLabeledFileTransferJapan.tsv", usecols=feature_names, sep='\t')
         self.feature_names = feature_names
         self.x_iloc_list = x_iloc_list
         self.y_iloc = y_iloc
         sc = StandardScaler()
+        self.sc = sc
         self.x_train = sc.fit_transform(X_train)
         self.y_train = y_train
         self.x_test = sc.transform(X_test)
@@ -240,8 +241,17 @@ class ClassifierModel:
         fig.savefig(out_file_name, bbox_inches="tight")
 
     def own_inverse_label_encoder(self, to_transform):
-        dict_transform_lables = {0: 'Browsing', 1: 'Chat', 2: 'Streaming', 3: 'File Transfer',
-                                 4: 'Video Conferencing'}
+        """dict_transform_lables = {0: 'Browsing', 1: 'Chat', 2: 'Streaming', 3: 'File Transfer',
+                                 4: 'Video Conferencing'}"""
+        # dict_transform_lables = {0: 'Youtube', 1: 'Netflix', 2: 'Vimeo'}
+        # dict_transform_lables = {0: 'Skype_chat', 1: 'Facebook', 2: 'GoogleHangouts',
+        #                          3: 'Whatsapp_chat', 4: 'Telegram_chat'}
+        # dict_transform_lables = {0: 'Skype_video', 1: 'GoogleMeets', 2: 'Zoom',
+        #                          3: 'Microsoft_teams'}
+        # dict_transform_lables = {0: 'Skype_video', 1: 'GoogleMeets', 2: 'Zoom',
+        #                          3: 'Microsoft_teams'}
+        dict_transform_lables = {0: 'qBitTorrent', 1: 'Skype_files', 2: 'Dropbox',
+                                 3: 'gdrive', 4: 'Whatsapp_files', 5: 'Telegram_files'}
         target = to_transform
         results = []
         for label in target:
@@ -249,8 +259,15 @@ class ClassifierModel:
         return results
 
     def own_label_encoder(self, to_transform):
-        dict_transform_lables = {'Browsing': 0, 'Chat': 1, 'Streaming': 2, 'File Transfer': 3,
-                                 'Video Conferencing': 4}
+        """dict_transform_lables = {'Browsing': 0, 'Chat': 1, 'Streaming': 2, 'File Transfer': 3,
+                                 'Video Conferencing': 4}"""
+        # dict_transform_lables = {'Youtube': 0, 'Netflix': 1, 'Vimeo': 2}
+        # dict_transform_lables = {'Skype_chat': 0, 'Facebook': 1, 'GoogleHangouts': 2,
+        #                          'Whatsapp_chat': 3, 'Telegram_chat': 4}
+        # dict_transform_lables = {'qBitTorrent': 0, 'qBittorrent': 1, 'Skype_files': 2,
+        #                          'Dropbox': 3, 'gdrive': 4, 'Whatsapp_files': 5, 'Telegram_files': 6}
+        dict_transform_lables = {'qBitTorrent': 0, 'Skype_files': 1, 'Dropbox': 2,
+                                 'gdrive': 3, 'Whatsapp_files': 4, 'Telegram_files': 5}
         target = []
         for label in to_transform:
             target.append(dict_transform_lables[label])
@@ -262,9 +279,8 @@ class ClassifierModel:
         :return:
         """
 
-        sc = StandardScaler()
         X = self.test_set.iloc[:, self.x_iloc_list].values
-        X = sc.fit_transform(X)
+        X = self.sc.fit_transform(X)
         Y = self.test_set.iloc[:, self.y_iloc].values
         models = ["model/" + f for f in listdir("model") if isfile("model/" + f)]
         for filename in models:

@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 browsing_type = {
-    'Random websites': 'Browsing',
+    'Random_websites': 'Browsing',
 
     'Skype_chat': 'Chat',
     'Facebook': 'Chat',
@@ -29,6 +29,11 @@ browsing_type = {
     'Microsoft_teams': 'Video Conferencing',
     'MicrosoftTeams': 'Video Conferencing'
 }
+
+double_alias = {'Microsoft_teams': 'Microsoft_teams',
+                'MicrosoftTeams': 'Microsoft_teams',
+                'qBitTorrent': 'qBitTorrent',
+                'qBittorrent': 'qBitTorrent'}
 
 TIME_EPOCH = 0
 FRAME_LEN = 1
@@ -71,6 +76,8 @@ def data_preprocessing():
                     else:
                         label = '_'.join(app_name[:app_name.index('VPN')])
                     print(label)
+                    if label in double_alias.keys():
+                        label = double_alias[label]
 
                     for i, line in enumerate(tsv_file):
                         if i == 0:  # skip heading
@@ -161,8 +168,6 @@ def set_row_feature(row_value, values_dict):
 
 
 def data_eng():
-    directory = '.\\place2_labeled'
-
     # data_preprocessing()
 
     directory = '.\\place1_labeled'
@@ -171,19 +176,19 @@ def data_eng():
     df = None
     for filename in os.listdir(directory):
         single_file_df = pd.read_csv(directory + '\\' + filename, sep='\t')
-        if single_file_df['categories'][0] == 'Browsing':
-            df = feature_aggregation(single_file_df.head(60000))
-        elif single_file_df['categories'][0] == 'Chat':
-            df = feature_aggregation(single_file_df.head(12000))
-        elif single_file_df['categories'][0] == 'Streaming':
-            df = feature_aggregation(single_file_df.head(20000))
-        elif single_file_df['categories'][0] == 'File Transfer':
-            df = feature_aggregation(single_file_df.head(10000))
-        elif single_file_df['categories'][0] == 'Video Conferencing':
-            df = feature_aggregation(single_file_df.head(15000))
+        # if single_file_df['categories'][0] == 'Browsing':
+        #     df = feature_aggregation(single_file_df.head(60000))
+        # elif single_file_df['categories'][0] == 'Chat':
+        #     df = feature_aggregation(single_file_df.head(12000))
+        # if single_file_df['categories'][0] == 'Streaming':
+        #     df = feature_aggregation(single_file_df.head(20000))
+        if single_file_df['categories'][0] == 'File Transfer':
+            df = feature_aggregation(single_file_df.head(50000))
+        # if single_file_df['categories'][0] == 'Video Conferencing':
+        #     df = feature_aggregation(single_file_df.head(15000))
 
         files_dfs.append(df)
     final_labeled_df = pd.concat(files_dfs)
-    final_labeled_df.to_csv('.\\FinalLabeled10KEachEngland.tsv', index=False, sep='\t')
-    # final_labeled_df.to_csv('.\\FinalLabeled10KEachJapan.tsv', index=False, sep='\t')
+    final_labeled_df.to_csv('.\\FinalLabeledFileTransferEngland.tsv', index=False, sep='\t')
+    # final_labeled_df.to_csv('.\\FinalLabeledFileTransferJapan.tsv', index=False, sep='\t')
 

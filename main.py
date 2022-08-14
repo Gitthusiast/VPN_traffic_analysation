@@ -4,12 +4,12 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    # dataE.data_eng()
+    dataE.data_eng()
 
-    filename = ".\\FinalLabeled10KEachEngland.tsv"
+    """filename = ".\\FinalLabeledFileTransferEngland.tsv"
 
     names = ['frame.len', 'tcp.srcport', 'io_packet',  'average_delta_time', 'std_delta_time', 'average_len',
-             'std_len', 'time_delta', 'categories']
+             'std_len', 'time_delta', 'applications_and_websites']
 
     labeled_df = pd.read_csv(filename, usecols=names, sep='\t')
     print(labeled_df)
@@ -20,11 +20,11 @@ if __name__ == '__main__':
     model = ClassifierModel(names, labeled_df, x_iloc_list, y_iloc)
 
     model.ANN()
-    """model.KNN()
+    model.KNN()
     model.NB()
     model.RF()
     model.DT()
-    model.XGBOOST()"""
+    model.XGBOOST()
     # model.SVM('linear')
 
-    model.run_models()
+    model.run_models()"""
