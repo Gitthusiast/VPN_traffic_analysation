@@ -19,12 +19,14 @@ if __name__ == '__main__':
 
     model = ClassifierModel(names, labeled_df, x_iloc_list, y_iloc)
 
-    model.ANN()
-    """model.KNN()
-    model.NB()
-    model.RF()
-    model.DT()
-    model.XGBOOST()"""
+    # model.KNN()
+    # model.NB()
+    # model.ANN()
+    # model.RF()
+    # model.DT()
+
+    # model.SVM('rbf')
     # model.SVM('linear')
+    # model.XGBOOST()
 
     model.run_models()

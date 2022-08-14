@@ -16,10 +16,6 @@ from os.path import isfile
 from sklearn.model_selection import train_test_split
 import xgboost as xgb
 
-from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.preprocessing import PowerTransformer
-
-
 class ClassifierModel:
 
     def __init__(self, feature_names, dataset, x_iloc_list, y_iloc, testSize=0.2):
